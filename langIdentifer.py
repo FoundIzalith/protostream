@@ -10,7 +10,6 @@ from IPython.display import Audio
 from torch.utils.data import DataLoader, Dataset, random_split
 import torch.nn.functional as F
 from torch.nn import init
-import torchaudio
 import lmu
 
 class AudioUtil():
@@ -196,33 +195,33 @@ class languageIdentifier(nn.Module):
     def validate(model, loader, criterion):
     # Single validation epoch
 
-    epoch_loss = 0
-    y_pred = []
-    y_true = []
-    
-    model.eval()
-    with torch.no_grad():
-        for batch, labels in tqdm(loader):
+        epoch_loss = 0
+        y_pred = []
+        y_true = []
+        
+        model.eval()
+        with torch.no_grad():
+            for batch, labels in tqdm(loader):
 
-            torch.cuda.empty_cache()
+                torch.cuda.empty_cache()
 
-            batch = batch.to(DEVICE)
-            labels = labels.long().to(DEVICE)
+                batch = batch.to(DEVICE)
+                labels = labels.long().to(DEVICE)
 
-            output = model(batch)
-            loss = criterion(output, labels)
-            
-            preds  = output.argmax(dim = 1)
-            y_pred += preds.tolist()
-            y_true += labels.tolist()
-            epoch_loss += loss.item()
-            
-    # Loss
-    avg_epoch_loss = epoch_loss / len(loader)
+                output = model(batch)
+                loss = criterion(output, labels)
+                
+                preds  = output.argmax(dim = 1)
+                y_pred += preds.tolist()
+                y_true += labels.tolist()
+                epoch_loss += loss.item()
+                
+        # Loss
+        avg_epoch_loss = epoch_loss / len(loader)
 
-    # Accuracy
-    epoch_acc = accuracy_score(y_true, y_pred)
+        # Accuracy
+        epoch_acc = accuracy_score(y_true, y_pred)
 
-    return avg_epoch_loss, epoch_acc
+        return avg_epoch_loss, epoch_acc
     
 
