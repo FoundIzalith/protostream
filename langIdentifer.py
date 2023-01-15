@@ -1,5 +1,6 @@
 #https://towardsdatascience.com/audio-deep-learning-made-simple-sound-classification-step-by-step-cebc936bbe5
-#All code here is taken from this article
+#The base of the code here is taken from this article
+#it has been modified to use the LMU
 
 import math, random
 import torch
@@ -123,7 +124,7 @@ class audioData(Dataset):
         self.dataFrame = dataFrame
         
     def __len__(self):
-        return len(self.df)
+        return len(self.dataFrame)
 
     def __getitem__(self, id):
         audioFile = self.path + self.dataFrame.loc[id, 'relative_path']
@@ -139,60 +140,89 @@ class audioData(Dataset):
 
         return spectrogram, classID
 
-class languageIdentifier:
-    def __init__():
-        super().__init__()
-        conv_layers = []
+class languageIdentifier(nn.Module):
+    def __init__(self, input_size, output_size, hidden_size, memory_size, theta, learn_a = False, learn_b = False):
+        super(Model, self).__init__()
+        self.lmu = LMU(input_size, hidden_size, memory_size, theta, learn_a, learn_b)
+        self.classifier = nn.Linear(hidden_size, output_size)
 
-        # First Convolution Block with Relu and Batch Norm. Use Kaiming Initialization
-        self.conv1 = nn.Conv2d(2, 8, kernel_size=(5, 5), stride=(2, 2), padding=(2, 2))
-        self.relu1 = nn.ReLU()
-        self.bn1 = nn.BatchNorm2d(8)
-        init.kaiming_normal_(self.conv1.weight, a=0.1)
-        self.conv1.bias.data.zero_()
-        conv_layers += [self.conv1, self.relu1, self.bn1]
+    def forward(self, x):
+        _, (h_n, _) = self.lmu(x) # [batch_size, hidden_size]
+        output = self.classifier(h_n)
+        return output # [batch_size, output_size]
 
-        # Second Convolution Block
-        self.conv2 = nn.Conv2d(8, 16, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1))
-        self.relu2 = nn.ReLU()
-        self.bn2 = nn.BatchNorm2d(16)
-        init.kaiming_normal_(self.conv2.weight, a=0.1)
-        self.conv2.bias.data.zero_()
-        conv_layers += [self.conv2, self.relu2, self.bn2]
+    def countParameters(model):
+        """ Counts and prints the number of trainable and non-trainable parameters of a model """
+        trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
+        frozen = sum(p.numel() for p in model.parameters() if not p.requires_grad)
+        print(f"The model has {trainable:,} trainable parameters and {frozen:,} frozen parameters")
 
-        # Second Convolution Block
-        self.conv3 = nn.Conv2d(16, 32, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1))
-        self.relu3 = nn.ReLU()
-        self.bn3 = nn.BatchNorm2d(32)
-        init.kaiming_normal_(self.conv3.weight, a=0.1)
-        self.conv3.bias.data.zero_()
-        conv_layers += [self.conv3, self.relu3, self.bn3]
+    def train(model, loader, optimizer, criterion):
+        # Single training epoch
 
-        # Second Convolution Block
-        self.conv4 = nn.Conv2d(32, 64, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1))
-        self.relu4 = nn.ReLU()
-        self.bn4 = nn.BatchNorm2d(64)
-        init.kaiming_normal_(self.conv4.weight, a=0.1)
-        self.conv4.bias.data.zero_()
-        conv_layers += [self.conv4, self.relu4, self.bn4]
+        epoch_loss = 0
+        y_pred = []
+        y_true = []
+        
+        model.train()
+        for batch, labels in tqdm(loader):
 
-        # Linear Classifier
-        self.ap = nn.AdaptiveAvgPool2d(output_size=1)
-        self.lin = nn.Linear(in_features=64, out_features=10)
+            torch.cuda.empty_cache()
 
-        # Wrap the Convolutional Blocks
-        self.conv = nn.Sequential(*conv_layers)
+            batch = batch.to(DEVICE)
+            labels = labels.long().to(DEVICE)
 
-    def forward():
-         # Run the convolutional blocks
-        x = self.conv(x)
+            optimizer.zero_grad()
 
-        # Adaptive pool and flatten for input to linear layer
-        x = self.ap(x)
-        x = x.view(x.shape[0], -1)
+            output = model(batch)
+            loss = criterion(output, labels)
+            
+            loss.backward()
+            optimizer.step()
 
-        # Linear layer
-        x = self.lin(x)
+            preds  = output.argmax(dim = 1)
+            y_pred += preds.tolist()
+            y_true += labels.tolist()
+            epoch_loss += loss.item()
 
-        # Final output
-        return x
+        # Loss
+        avg_epoch_loss = epoch_loss / len(loader)
+
+        # Accuracy
+        epoch_acc = accuracy_score(y_true, y_pred)
+
+        return avg_epoch_loss, epoch_acc
+
+    def validate(model, loader, criterion):
+    # Single validation epoch
+
+    epoch_loss = 0
+    y_pred = []
+    y_true = []
+    
+    model.eval()
+    with torch.no_grad():
+        for batch, labels in tqdm(loader):
+
+            torch.cuda.empty_cache()
+
+            batch = batch.to(DEVICE)
+            labels = labels.long().to(DEVICE)
+
+            output = model(batch)
+            loss = criterion(output, labels)
+            
+            preds  = output.argmax(dim = 1)
+            y_pred += preds.tolist()
+            y_true += labels.tolist()
+            epoch_loss += loss.item()
+            
+    # Loss
+    avg_epoch_loss = epoch_loss / len(loader)
+
+    # Accuracy
+    epoch_acc = accuracy_score(y_true, y_pred)
+
+    return avg_epoch_loss, epoch_acc
+    
+
