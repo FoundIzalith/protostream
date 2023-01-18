@@ -16,18 +16,14 @@ def main():
         print("Error: datapath not found")
         exit()
 
-    dataset= audioData(dataFrame, "./data/")
+    dataset = audioData(dataFrame, "./data/")
     train_size = int(0.8 * len(dataset))
     val_size = len(dataset) - train_size
     
     audio_train, audio_val = random_split(dataset, [train_size, val_size])
 
-    perm = torch.load("permutation.pt").long() # created using torch.randperm(784)
-    ds_train = psMNIST(audio_train, perm)
-    ds_val   = psMNIST(audio_val, perm) 
-
-    dl_train = DataLoader(ds_train, batch_size = N_b, shuffle = True, num_workers = 2)
-    dl_val   = DataLoader(ds_val, batch_size = N_b, shuffle = True, num_workers = 2)
+    dl_train = DataLoader(audio_train, batch_size = N_b, shuffle = True, num_workers = 2)
+    dl_val   = DataLoader(audio_val, batch_size = N_b, shuffle = True, num_workers = 2)
         
 if __name__ == "__main__":
     main()
