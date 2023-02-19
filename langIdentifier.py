@@ -72,12 +72,12 @@ class AudioUtil():
             pad_begin_len = random.randint(0, max_len - sig_len)
             pad_end_len = max_len - sig_len - pad_begin_len
 
-        # Pad with 0s
-        pad_begin = torch.zeros((num_rows, pad_begin_len))
-        pad_end = torch.zeros((num_rows, pad_end_len))
+            # Pad with 0s
+            pad_begin = torch.zeros((num_rows, pad_begin_len))
+            pad_end = torch.zeros((num_rows, pad_end_len))
 
-        sig = torch.cat((pad_begin, sig, pad_end), 1)
-      
+            sig = torch.cat((pad_begin, sig, pad_end), 1)
+
         return (sig, sr)   
 
     @staticmethod
@@ -127,12 +127,12 @@ class audioData(Dataset):
         return len(self.dataFrame)
 
     def __getitem__(self, id):
-        audioFile = self.path + self.dataFrame.loc[id, 'relative_path']
-        classID = self.dataFrame.loc[id, 'classID']
+        audioFile = self.path + self.dataFrame.loc[id, 'Sample Filename']
+        classID = self.dataFrame.loc[id, 'Language']
         file = AudioUtil.open(audioFile)
         #Ensure consistent data
         resampled = AudioUtil.resample(file, self.sampleRate)
-        rechanneled = AudioUtil.rechannel(resample, self.channels)
+        rechanneled = AudioUtil.rechannel(resampled, self.channels)
         padded = AudioUtil.pad_trunc(rechanneled, self.duration)
         shifted = AudioUtil.timeshift(padded, 0.4)
         spectro = AudioUtil.spectrogram(shifted, n_mels=64, n_fft=1024, hop_len=None)
@@ -157,7 +157,7 @@ class languageIdentifier(nn.Module):
         frozen = sum(p.numel() for p in model.parameters() if not p.requires_grad)
         print(f"The model has {trainable:,} trainable parameters and {frozen:,} frozen parameters")
 
-    def train(model, loader, optimizer, criterion):
+    def train(model, loader, optimizer, criterion, DEVICE):
         # Single training epoch
 
         epoch_loss = 0
@@ -193,7 +193,7 @@ class languageIdentifier(nn.Module):
 
         return avg_epoch_loss, epoch_acc
 
-    def validate(model, loader, criterion):
+    def validate(model, loader, criterion, DEVICE):
     # Single validation epoch
 
         epoch_loss = 0
