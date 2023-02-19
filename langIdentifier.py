@@ -8,9 +8,11 @@ import torchaudio
 from torchaudio import transforms
 from IPython.display import Audio
 from torch.utils.data import DataLoader, Dataset, random_split
+from torch import nn
 import torch.nn.functional as F
 from torch.nn import init
 import lmu
+from tqdm.notebook import tqdm
 
 class AudioUtil():
     #Load audio file, return as tensor
@@ -114,12 +116,11 @@ class AudioUtil():
         return aug_spec
 
 class audioData(Dataset):
-    def __init__(self, filename, path, duration, sampleRate, channels, dataFrame):
-        self.filename = filename
+    def __init__(self, dataFrame, path):
         self.path = path
-        self.duration = duration
-        self.sampleRate = sampleRate
-        self.channels = channels
+        self.duration = 10000
+        self.sampleRate = 44100
+        self.channels = 2
         self.dataFrame = dataFrame
         
     def __len__(self):
@@ -141,8 +142,8 @@ class audioData(Dataset):
 
 class languageIdentifier(nn.Module):
     def __init__(self, input_size, output_size, hidden_size, memory_size, theta, learn_a = False, learn_b = False):
-        super(Model, self).__init__()
-        self.lmu = LMU(input_size, hidden_size, memory_size, theta, learn_a, learn_b)
+        super(languageIdentifier, self).__init__()
+        self.lmu = lmu.LMU(input_size, hidden_size, memory_size, theta, learn_a, learn_b)
         self.classifier = nn.Linear(hidden_size, output_size)
 
     def forward(self, x):
@@ -163,7 +164,7 @@ class languageIdentifier(nn.Module):
         y_pred = []
         y_true = []
         
-        model.train()
+        #model.train()
         for batch, labels in tqdm(loader):
 
             torch.cuda.empty_cache()

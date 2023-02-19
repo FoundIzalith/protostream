@@ -1,6 +1,7 @@
 import lmu  # https://github.com/hrshtv/pytorch-lmu
 import torch
 import torchaudio
+from torch import optim, nn
 from langIdentifier import audioData, languageIdentifier
 from torch.utils.data import random_split, dataset, DataLoader
 import sys 
@@ -64,7 +65,7 @@ def main():
     )
     model = model.to(DEVICE)
 
-    countParameters(model)
+    languageIdentifier.countParameters(model)
     optimizer = optim.Adam(params = model.parameters())
 
     criterion = nn.CrossEntropyLoss()
@@ -78,8 +79,8 @@ def main():
     for epoch in range(N_epochs):
             print("Epoch ", epoch)
 
-            train_loss, train_acc = train(model, dl_train, optimizer, criterion)
-            val_loss, val_acc = validate(model, dl_val, criterion)
+            train_loss, train_acc = languageIdentifier.train(model, dl_train, optimizer, criterion)
+            val_loss, val_acc = languageIdentifier.validate(model, dl_val, criterion)
 
             train_losses.append(train_loss)
             train_accs.append(train_acc)
@@ -89,9 +90,6 @@ def main():
             print(f"Train Loss: {train_loss:.3f} | Train Acc: {train_acc*100:.2f}%")
             print(f"Val. Loss: {val_loss:.3f} |  Val. Acc: {val_acc*100:.2f}%")
             print()
-     
-
-
         
 if __name__ == "__main__":
     main()
