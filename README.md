@@ -18,3 +18,4 @@ Protostream runs on Python3 and uses the following packages:
 - PyTorch
 - Pandas
 - SciPy 
+- TQDM
