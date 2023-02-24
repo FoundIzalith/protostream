@@ -128,7 +128,12 @@ class audioData(Dataset):
 
     def __getitem__(self, id):
         audioFile = self.path + self.dataFrame.loc[id, 'Sample Filename']
-        classID = self.dataFrame.loc[id, 'Language']
+        class_name = self.dataFrame.loc[id, 'Language']
+        class_id = 0
+
+        for char in class_name: # Convert language name into an int id
+            class_id += ord(char)
+
         file = AudioUtil.open(audioFile)
         #Ensure consistent data
         resampled = AudioUtil.resample(file, self.sampleRate)
@@ -138,7 +143,7 @@ class audioData(Dataset):
         spectro = AudioUtil.spectrogram(shifted, n_mels=64, n_fft=1024, hop_len=None)
         spectrogram = AudioUtil.spectroaugment(spectro, max_mask_pct=0.1, n_freq_masks=2, n_time_masks=2)
 
-        return spectrogram, classID
+        return spectrogram, class_id
 
 class languageIdentifier(nn.Module):
     def __init__(self, input_size, output_size, hidden_size, memory_size, theta, learn_a = False, learn_b = False):
@@ -170,7 +175,7 @@ class languageIdentifier(nn.Module):
             torch.cuda.empty_cache()
 
             batch = batch.to(DEVICE)
-            labels = labels.long().to(DEVICE)
+            labels = torch.tensor(labels).to(DEVICE)
 
             optimizer.zero_grad()
 
@@ -200,14 +205,14 @@ class languageIdentifier(nn.Module):
         y_pred = []
         y_true = []
         
-        model.eval()
+        #model.eval()
         with torch.no_grad():
             for batch, labels in tqdm(loader):
 
                 torch.cuda.empty_cache()
 
                 batch = batch.to(DEVICE)
-                labels = labels.long().to(DEVICE)
+                labels = torch.tensor(labels).to(DEVICE)
 
                 output = model(batch)
                 loss = criterion(output, labels)
@@ -224,5 +229,3 @@ class languageIdentifier(nn.Module):
         epoch_acc = accuracy_score(y_true, y_pred)
 
         return avg_epoch_loss, epoch_acc
-    
-
