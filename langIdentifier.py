@@ -175,7 +175,7 @@ class languageIdentifier(nn.Module):
             torch.cuda.empty_cache()
 
             batch = batch.to(DEVICE)
-            labels = torch.tensor(labels).to(DEVICE)
+            lables = labels.to(DEVICE)
 
             optimizer.zero_grad()
 
@@ -212,7 +212,7 @@ class languageIdentifier(nn.Module):
                 torch.cuda.empty_cache()
 
                 batch = batch.to(DEVICE)
-                labels = torch.tensor(labels).to(DEVICE)
+                labels = labels.to(DEVICE)
 
                 output = model(batch)
                 loss = criterion(output, labels)
