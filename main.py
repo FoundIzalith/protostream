@@ -87,9 +87,13 @@ def main():
         val_losses.append(val_loss)
         val_accs.append(val_acc)
 
-        print(f"Train Loss: {train_loss:.3f} | Train Acc: {train_acc*100:.2f}%")
-        print(f"Val. Loss: {val_loss:.3f} |  Val. Acc: {val_acc*100:.2f}%")
+        print(f"Train Loss: {train_loss:.3f} | Train Accuracy: {train_acc*100:.2f}%")
+        print(f"Validation Loss: {val_loss:.3f} |  Validation Accuracy: {val_acc*100:.2f}%")
         print()
+
+    torch.save(model.state_dict(), "trained_model.pt")
+
+    print("All done!")
         
 if __name__ == "__main__":
     main()
