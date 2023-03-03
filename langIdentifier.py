@@ -174,12 +174,17 @@ class languageIdentifier(nn.Module):
 
             torch.cuda.empty_cache()
 
+
             batch = batch.to(DEVICE)
-            lables = labels.to(DEVICE)
+            labels = labels.long().to(DEVICE)
 
             optimizer.zero_grad()
 
+            print("Batch size: ", batch.size())
+
             output = model(batch)
+            print("Output: ", output.size())
+            print("Labels: ", labels.size())
             loss = criterion(output, labels)
             
             loss.backward()
