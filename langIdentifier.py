@@ -129,7 +129,7 @@ class audioData(Dataset):
     def __getitem__(self, id):
         audioFile = self.path + self.dataFrame.loc[id, 'Sample Filename']
         class_name = self.dataFrame.loc[id, 'Language']
-        class_id = 0
+        class_id = ord(class_name[0]) * 100000
 
         for char in class_name: # Convert language name into an int id
             class_id += ord(char)
@@ -174,7 +174,6 @@ class languageIdentifier(nn.Module):
 
             torch.cuda.empty_cache()
 
-
             batch = batch.to(DEVICE)
             labels = labels.long().to(DEVICE)
 
@@ -190,7 +189,7 @@ class languageIdentifier(nn.Module):
             loss.backward()
             optimizer.step()
 
-            preds  = output.argmax(dim = 1)
+            preds = output.argmax(dim = 1)
             y_pred += preds.tolist()
             y_true += labels.tolist()
             epoch_loss += loss.item()
@@ -217,7 +216,7 @@ class languageIdentifier(nn.Module):
                 torch.cuda.empty_cache()
 
                 batch = batch.to(DEVICE)
-                labels = labels.to(DEVICE)
+                labels = labels.long().to(DEVICE)
 
                 output = model(batch)
                 loss = criterion(output, labels)
