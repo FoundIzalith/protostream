@@ -9,12 +9,12 @@ from os.path import exists
 import pandas 
 from pathlib import Path
 
-N_x = 2 # Dimension of input
+N_x = 860 # Dimension of input
 N_c = 176 # Number of classes, 176 for 176 languages
 N_h = 212 # hidden layer size
 N_m = 256 # memory size
 N_t = 784 # Number of time steps
-batch = 376 # batch size
+batch = 64 # batch size
 N_epochs = 10
 
 def main():
@@ -43,7 +43,18 @@ def main():
         DEVICE = "cpu"
 
     dataFrame = pandas.read_csv(metadata)
+    language = dataFrame['Language'].unique()
     dataFrame.head()
+
+    languages = []
+    # Convert language name into an int id
+    for entry in language:
+        id = ord(entry[0]) * 100000
+        for char in entry: 
+            id += ord(char)
+        languages.append(id)
+
+    languages = torch.tensor(languages)
 
     dataset = audioData(dataFrame, datapath)
     train_size = int(0.8 * len(dataset))
@@ -79,8 +90,8 @@ def main():
     for epoch in range(N_epochs):
         print("Epoch ", epoch)
 
-        train_loss, train_acc = languageIdentifier.train(model, dl_train, optimizer, criterion, DEVICE)
-        val_loss, val_acc = languageIdentifier.validate(model, dl_val, criterion, DEVICE)
+        train_loss, train_acc = languageIdentifier.train(model, dl_train, optimizer, criterion, DEVICE, languages)
+        val_loss, val_acc = languageIdentifier.validate(model, dl_val, criterion, DEVICE, languages)
 
         train_losses.append(train_loss)
         train_accs.append(train_acc)
