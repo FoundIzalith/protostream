@@ -65,6 +65,13 @@ def main():
     #)
     
     model = langIdentifierReLU()
+
+    if exists ('trained_model.pt'):
+        model.load_state_dict(torch.load('trained_model.pt'))
+        print("Loading existing model")
+    else:
+        print("No existing model found; training from scratch")
+        
     model = model.to(DEVICE)
 
     langIdentifierReLU.countParameters(model)
