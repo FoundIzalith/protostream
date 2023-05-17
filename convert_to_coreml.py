@@ -22,7 +22,6 @@ loader = torch.rand(64, 2, 64, 860)
 # Trace model flow
 print("Model loaded; tracing flow...")
 traced = torch.jit.trace(torchModel, loader)
-print("traced2")
 output = traced(loader)
 
 # Convert to Core ML
