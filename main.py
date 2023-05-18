@@ -2,18 +2,13 @@ import lmu  # https://github.com/hrshtv/pytorch-lmu
 import torch
 import torchaudio
 from torch import optim, nn
-from langIdentifier import audioData, langIdentifierLMU, langIdentifierReLU
+from langIdentifier import audioData, langIdentifierReLU
 from torch.utils.data import random_split, dataset, DataLoader
 import sys 
 from os.path import exists
 import pandas 
 from pathlib import Path
 
-N_x = 860 # Dimension of input
-N_c = 176 # Number of classes, 176 for 176 languages
-N_h = 212 # hidden layer size
-N_m = 256 # memory size
-N_t = 784 # Number of time steps
 batch = 64 # batch size
 N_epochs = 10
 
@@ -55,15 +50,6 @@ def main():
     dl_train = DataLoader(audio_train, batch_size = batch, shuffle = True, num_workers = 2, pin_memory=True)
     dl_val   = DataLoader(audio_val, batch_size = batch, shuffle = True, num_workers = 2, pin_memory=True)
 
-    #model = langIdentifierLMU(
-    #    input_size = N_x, # Dimension of input
-    #    output_size = N_c, #Number of classes # 176 for 176 languages 
-    #    hidden_size = N_h, #Dimension of hidden state
-    #    memory_size =  N_m, #dimension of memory
-    #    theta = N_t,
-    #    seq_len= N_t 
-    #)
-    
     model = langIdentifierReLU()
 
     if exists ('trained_model.pt'):
@@ -104,7 +90,7 @@ def main():
 
     torch.save(model.state_dict(), "trained_model.pt")
 
-    print("All done!")
+    print("All done! <3")
         
 if __name__ == "__main__":
     main()

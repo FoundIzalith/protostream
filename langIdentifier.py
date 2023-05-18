@@ -1,14 +1,14 @@
 import math, random
+from IPython.display import Audio
 import torch
 import torchaudio
 from torchaudio import transforms
-from IPython.display import Audio
 from torch.utils.data import DataLoader, Dataset, random_split
 from torch import nn
 import torch.nn.functional as F
 from torch.nn import init
-from lmu import LMUFFT
-from tqdm.notebook import tqdm
+
+N_classes = 176 # Number of classes (languages) in dataset
 
 class AudioUtil():
     #Load audio file, return as tensor
@@ -139,112 +139,6 @@ class audioData(Dataset):
 
         return spectrogram, class_id
 
-class langIdentifierLMU(nn.Module):
-    def __init__(self, input_size, output_size, hidden_size, memory_size, seq_len, theta):
-        super(langIdentifierLMU, self).__init__()
-        #self.lmu = lmu.LMU(input_size, hidden_size, memory_size, theta, learn_a, learn_b)
-        #self.classifier = nn.Linear(hidden_size, output_size)
-        self.lmu_fft = LMUFFT(input_size, hidden_size, memory_size, seq_len, theta)
-        self.dropout = nn.Dropout(p = 0.5)
-        self.classifier = nn.Linear(hidden_size, output_size)
-
-    def forward(self, x):
-        _, (h_n, _) = self.lmu_fft(x) # [batch_size, hidden_size]
-        x = self.dropout(h_n)
-        output = self.classifier(x)
-        return output # [batch_size, output_size]
-
-    def countParameters(model):
-        """ Counts and prints the number of trainable and non-trainable parameters of a model """
-        trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
-        frozen = sum(p.numel() for p in model.parameters() if not p.requires_grad)
-        print(f"The model has {trainable:,} trainable parameters and {frozen:,} frozen parameters")
-
-    def training(model, loader, optimizer, criterion, DEVICE):
-        # Single training epoch
-
-        epoch_loss = 0
-        y_pred = []
-        y_true = []
-        
-        model.train()
-        for batch, labels in tqdm(loader):
-            # Batch shape default: [classes, workers?, ?, input]
-            print("Batch size: ", batch.size())
-            batch =  batch[:, 0, :, :]
-
-            torch.cuda.empty_cache()
-
-            batch = batch.to(DEVICE)
-            labels = labels.long().to(DEVICE)
-
-            
-            optimizer.zero_grad()
-
-            print("Batch size: ", batch.size())
-
-            output = model(batch)
-            output = output[:, -1]
-            #=print("Output: ", output.size())
-            #print("Labels: ", labels.size())
-            loss = criterion(output, labels)
-            
-            loss.backward()
-            optimizer.step()
-
-            preds = output.argmax(dim = 1)
-            y_pred += preds.tolist()
-            y_true += labels.tolist()
-            epoch_loss += loss.item()
-
-        # Loss
-        avg_epoch_loss = epoch_loss / len(loader)
-
-        # Accuracy
-        epoch_acc = accuracy_score(y_true, y_pred)
-        
-        return avg_epoch_loss, epoch_acc
-
-    def validate(model, loader, criterion, DEVICE):
-    # Single validation epoch
-
-        epoch_loss = 0
-        y_pred = []
-        y_true = []
-        
-        i = 0
-
-        model.eval()
-        with torch.no_grad():
-            for batch, labels in tqdm(loader):
-                x, v, h, m = batch
-                batch = [x, h, m]
-
-                torch.cuda.empty_cache()
-
-                batch = batch.to(DEVICE)
-                labels = labels.long().to(DEVICE)
-
-                output = model(batch)
-                output = output[:, -1]
-                loss = criterion(output, labels)
-                
-                preds  = output.argmax(dim = 1)
-                y_pred += preds.tolist()
-                y_true += labels.tolist()
-                epoch_loss += loss.item()
-
-                print(i)
-                i = i + 1
-                
-        # Loss
-        avg_epoch_loss = epoch_loss / len(loader)
-
-        # Accuracy
-        epoch_acc = accuracy_score(y_true, y_pred)
-
-        return avg_epoch_loss, epoch_acc
-
 class langIdentifierReLU(nn.Module):
     def __init__(self):
         super().__init__()
@@ -284,7 +178,7 @@ class langIdentifierReLU(nn.Module):
 
         # Linear Classifier
         self.ap = nn.AdaptiveAvgPool2d(output_size=1)
-        self.lin = nn.Linear(in_features=64, out_features=176)
+        self.lin = nn.Linear(in_features=64, out_features=N_classes)
 
         # Wrap the Convolutional Blocks
         self.conv = nn.Sequential(*conv_layers)
