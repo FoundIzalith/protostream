@@ -1,4 +1,3 @@
-import lmu  # https://github.com/hrshtv/pytorch-lmu
 import torch
 import torchaudio
 from torch import optim, nn
