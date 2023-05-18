@@ -1,14 +1,9 @@
 import torch
 import coremltools as ct
 import pandas 
-import sys
 import random
 from torch.utils.data import DataLoader
 from langIdentifier import audioData, langIdentifierReLU
-
-# Provide command line arguments here 
-datapath = sys.argv[1] # Path to folder containing audio 
-metadata = sys.argv[2] # Path to .csv containing metadata
 
 # Load saved model
 torchModel = langIdentifierReLU()
